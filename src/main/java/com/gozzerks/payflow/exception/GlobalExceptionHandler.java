@@ -17,4 +17,12 @@ public class GlobalExceptionHandler {
         problem.setProperty("timestamp", Instant.now());
         return problem;
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgumentException(IllegalArgumentException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid Request");
+        problem.setProperty("timestamp", Instant.now());
+        return problem;
+    }
 }

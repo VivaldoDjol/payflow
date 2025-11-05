@@ -8,6 +8,8 @@ import com.gozzerks.payflow.repository.OrderRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
@@ -18,6 +20,18 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
+        Optional<Order> existingOrder = orderRepository.findByIdempotencyKey(idempotencyKey);
+        if (existingOrder.isPresent()) {
+            return toResponse(existingOrder.get());
+        }
+
+        if (request.amount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than 0");
+        }
+        if (!"GBP".equalsIgnoreCase(request.currency())) {
+            throw new IllegalArgumentException("Only GBP is supported");
+        }
+
         Order order = new Order(request.amount(), request.currency(), idempotencyKey);
         Order saved = orderRepository.save(order);
         return toResponse(saved);

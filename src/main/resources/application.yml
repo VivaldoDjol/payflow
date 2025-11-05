@@ -11,3 +11,6 @@ spring:
     hibernate:
       ddl-auto: create-drop  # Might have to change for 'validate' later
     show-sql: true
+
+    server:
+      port: 8080
