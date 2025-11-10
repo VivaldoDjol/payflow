@@ -11,6 +11,11 @@ spring:
     hibernate:
       ddl-auto: create-drop  # Might have to change for 'validate' later
     show-sql: true
+  rabbitmq:
+      host: localhost
+      port: 5672
+      username: guest
+      password: guest
 
-    server:
-      port: 8080
+server:
+ port: 8080
