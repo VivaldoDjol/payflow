@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.event;
 
+import com.gozzerks.payflow.service.PaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -8,19 +9,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class PaymentConsumer {
 
-    private static final Logger logger = LoggerFactory.getLogger(PaymentConsumer.class);
+    private static final Logger log = LoggerFactory.getLogger(PaymentConsumer.class);
+    private final PaymentService paymentService;
 
-
-    public PaymentConsumer() {
-
+    public PaymentConsumer(PaymentService paymentService) {
+        this.paymentService = paymentService;
     }
 
-    @RabbitListener(queues = "payment.request.queue")
+    @RabbitListener(queues = "payment.queue")
     public void handlePaymentRequest(PaymentRequestedEvent event) {
-        logger.info("Received payment request for Order ID: {} with amount {} {}",
-                event.getOrderId(), event.getAmount(), event.getCurrency());
-
-
-        logger.debug("Payment event details: {}", event);
+        log.info("📥 Processing payment for order {} ({} {})",
+                event.orderId(), event.amount(), event.currency());
+        paymentService.processPayment(event.orderId());
     }
 }
