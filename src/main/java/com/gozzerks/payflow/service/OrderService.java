@@ -2,44 +2,58 @@ package com.gozzerks.payflow.service;
 
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
-import com.gozzerks.payflow.exception.OrderNotFoundException;
+import com.gozzerks.payflow.event.PaymentRequestedEvent;
 import com.gozzerks.payflow.model.Order;
+import com.gozzerks.payflow.model.OrderStatus;
 import com.gozzerks.payflow.repository.OrderRepository;
-import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final OrderRepository orderRepository;
+    private final RabbitTemplate rabbitTemplate;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate) {
         this.orderRepository = orderRepository;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
-        Optional<Order> existingOrder = orderRepository.findByIdempotencyKey(idempotencyKey);
-        if (existingOrder.isPresent()) {
-            return toResponse(existingOrder.get());
-        }
-
-        if (request.amount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than 0");
-        }
-        if (!"GBP".equalsIgnoreCase(request.currency())) {
-            throw new IllegalArgumentException("Only GBP is supported");
+        var existing = orderRepository.findByIdempotencyKey(idempotencyKey);
+        if (existing.isPresent()) {
+            log.info("Idempotency key {} reused, returning existing order {}", idempotencyKey, existing.get().getId());
+            return toResponse(existing.get());
         }
 
         Order order = new Order(request.amount(), request.currency(), idempotencyKey);
         Order saved = orderRepository.save(order);
-        return toResponse(saved);
+
+        rabbitTemplate.convertAndSend(
+                "payment.exchange",
+                "payment.routing.key",
+                new PaymentRequestedEvent(
+                        saved.getId(),
+                        saved.getAmount(),
+                        saved.getCurrency(),
+                        saved.getIdempotencyKey()
+                )
+        );
+
+        saved.setStatus(OrderStatus.PROCESSING);
+        Order processed = orderRepository.save(saved);
+
+        return toResponse(processed);
     }
 
     public OrderResponse getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new OrderNotFoundException("Order not found: " + id));
+                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
         return toResponse(order);
     }
 
