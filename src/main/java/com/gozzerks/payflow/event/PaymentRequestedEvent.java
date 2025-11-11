@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.event;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 public record PaymentRequestedEvent(
@@ -7,4 +8,4 @@ public record PaymentRequestedEvent(
         BigDecimal amount,
         String currency,
         String idempotencyKey
-) {}
+) implements Serializable {}
