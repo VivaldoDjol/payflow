@@ -11,22 +11,25 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String PAYMENT_QUEUE = "payment.queue";
     public static final String PAYMENT_EXCHANGE = "payment.exchange";
+    public static final String PAYMENT_QUEUE = "payment.queue";
+    public static final String PAYMENT_DLQ = "payment.dlq";
     public static final String PAYMENT_ROUTING_KEY = "payment.routing.key";
+    public static final String DLX = "dlx";
 
     @Bean
     public Queue paymentQueue() {
         return QueueBuilder.durable(PAYMENT_QUEUE)
-                .deadLetterExchange("dlx")
-                .deadLetterRoutingKey("payment.dlq")
-                .ttl(10000) // 10s retry delay
+                .deadLetterExchange(DLX)
+                .deadLetterRoutingKey(PAYMENT_ROUTING_KEY)
+                .ttl(5000) // Retry after 5 seconds
+                .maxLength(3) // Max 3 retries (via redelivery count)
                 .build();
     }
 
     @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable("payment.dlq").build();
+    public Queue paymentDlq() {
+        return QueueBuilder.durable(PAYMENT_DLQ).build();
     }
 
     @Bean
@@ -35,8 +38,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public TopicExchange deadLetterExchange() {
-        return new TopicExchange("dlx");
+    public TopicExchange dlx() {
+        return new TopicExchange(DLX);
     }
 
     @Bean
@@ -45,8 +48,8 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding dlqBinding(Queue deadLetterQueue, TopicExchange deadLetterExchange) {
-        return BindingBuilder.bind(deadLetterQueue).to(deadLetterExchange).with("payment.dlq");
+    public Binding dlqBinding(Queue paymentDlq, TopicExchange dlx) {
+        return BindingBuilder.bind(paymentDlq).to(dlx).with(PAYMENT_ROUTING_KEY);
     }
 
     @Bean
