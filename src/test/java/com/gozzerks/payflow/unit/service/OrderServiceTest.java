@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,6 +27,9 @@ class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
     private OrderService orderService;
@@ -50,10 +54,11 @@ class OrderServiceTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.amount()).isEqualByComparingTo("29.99");
         assertThat(response.currency()).isEqualTo("GBP");
-        assertThat(response.status()).isEqualTo("PENDING");
+        assertThat(response.status()).isEqualTo("PROCESSING");
         assertThat(response.idempotencyKey()).isEqualTo(idempotencyKey);
         assertThat(response.createdAt()).isBetween(before, after);
 
         verify(orderRepository).save(any(Order.class));
+        verify(rabbitTemplate).convertAndSend(any(String.class), any(String.class), any(Object.class));
     }
 }

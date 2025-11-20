@@ -46,9 +46,8 @@ public class OrderService {
         );
 
         saved.setStatus(OrderStatus.PROCESSING);
-        Order processed = orderRepository.save(saved);
 
-        return toResponse(processed);
+        return toResponse(saved);
     }
 
     public OrderResponse getOrderById(Long id) {
