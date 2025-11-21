@@ -25,11 +25,22 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
   health:
     rabbit:
       enabled: true
     db:
       enabled: true
+
+info:
+  app:
+    name: '@project.name@'
+    version: '@project.version@'
+    description: '@project.description@'
+  java:
+    source: '@java.version@'
+  built-by: '@user.name@'
 
 server:
   port: 8080
