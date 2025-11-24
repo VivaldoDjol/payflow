@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.RoundingMode;
 
 @Service
 public class OrderService {
@@ -39,7 +40,7 @@ public class OrderService {
                 "payment.routing.key",
                 new PaymentRequestedEvent(
                         saved.getId(),
-                        saved.getAmount(),
+                        saved.getAmount().setScale(4, RoundingMode.HALF_UP),
                         saved.getCurrency(),
                         saved.getIdempotencyKey()
                 )
@@ -59,7 +60,7 @@ public class OrderService {
     private OrderResponse toResponse(Order order) {
         return new OrderResponse(
                 order.getId(),
-                order.getAmount(),
+                order.getAmount().setScale(4, RoundingMode.HALF_UP),
                 order.getCurrency(),
                 order.getStatus().name(),
                 order.getIdempotencyKey(),
