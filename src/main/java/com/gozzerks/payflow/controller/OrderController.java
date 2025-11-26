@@ -2,7 +2,6 @@ package com.gozzerks.payflow.controller;
 
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
-import com.gozzerks.payflow.exception.OrderNotFoundException;
 import com.gozzerks.payflow.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -35,11 +34,7 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
-        try {
             OrderResponse response = orderService.getOrderById(id);
             return ResponseEntity.ok(response);
-        } catch (OrderNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
     }
 }
