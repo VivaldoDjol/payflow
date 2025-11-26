@@ -3,6 +3,7 @@ package com.gozzerks.payflow.service;
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
 import com.gozzerks.payflow.event.PaymentRequestedEvent;
+import com.gozzerks.payflow.exception.OrderNotFoundException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
 import com.gozzerks.payflow.repository.OrderRepository;
@@ -11,9 +12,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_EXCHANGE;
+import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_ROUTING_KEY;
 
 @Service
+@Transactional
 public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private final OrderRepository orderRepository;
@@ -24,45 +32,63 @@ public class OrderService {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
-        var existing = orderRepository.findByIdempotencyKey(idempotencyKey);
-        if (existing.isPresent()) {
-            log.info("Idempotency key {} reused, returning existing order {}", idempotencyKey, existing.get().getId());
-            return toResponse(existing.get());
+        if (request.amount() == null) {
+            throw new IllegalArgumentException("Amount is required");
         }
 
-        Order order = new Order(request.amount(), request.currency(), idempotencyKey);
-        Order saved = orderRepository.save(order);
+        if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
 
-        rabbitTemplate.convertAndSend(
-                "payment.exchange",
-                "payment.routing.key",
-                new PaymentRequestedEvent(
-                        saved.getId(),
-                        saved.getAmount().setScale(4, RoundingMode.HALF_UP),
-                        saved.getCurrency(),
-                        saved.getIdempotencyKey()
-                )
-        );
+        if (request.currency() == null || request.currency().isEmpty()) {
+            throw new IllegalArgumentException("Currency is required");
+        }
 
-        saved.setStatus(OrderStatus.PROCESSING);
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            idempotencyKey = UUID.randomUUID().toString();
+        }
 
-        return toResponse(saved);
+        final String finalIdempotencyKey = idempotencyKey;
+
+        return orderRepository.findByIdempotencyKey(idempotencyKey)
+                .map(this::toOrderResponse)
+                .orElseGet(() -> {
+                    Order order = new Order();
+                    order.setAmount(request.amount().setScale(4, RoundingMode.HALF_UP));
+                    order.setCurrency(request.currency().toUpperCase());
+                    order.setStatus(OrderStatus.PROCESSING);
+                    order.setIdempotencyKey(finalIdempotencyKey);
+                    order.setCreatedAt(LocalDateTime.now());
+
+                    Order savedOrder = orderRepository.save(order);
+
+                    PaymentRequestedEvent event = new PaymentRequestedEvent(
+                            savedOrder.getId(),
+                            savedOrder.getAmount(),
+                            savedOrder.getCurrency(),
+                            savedOrder.getIdempotencyKey()
+                    );
+
+                    rabbitTemplate.convertAndSend(PAYMENT_EXCHANGE, PAYMENT_ROUTING_KEY, event);
+                    log.info("Payment requested for order ID: {}", savedOrder.getId());
+
+                    return toOrderResponse(savedOrder);
+                });
     }
 
     public OrderResponse getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
-        return toResponse(order);
+        return orderRepository.findById(id)
+                .map(this::toOrderResponse)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + id));
     }
 
-    private OrderResponse toResponse(Order order) {
+    private OrderResponse toOrderResponse(Order order) {
         return new OrderResponse(
                 order.getId(),
-                order.getAmount().setScale(4, RoundingMode.HALF_UP),
+                order.getAmount(),
                 order.getCurrency(),
-                order.getStatus().name(),
+                order.getStatus().toString(),
                 order.getIdempotencyKey(),
                 order.getCreatedAt()
         );
