@@ -32,15 +32,17 @@ management:
       enabled: true
     db:
       enabled: true
+  info:
+    env:
+      enabled: true
 
 info:
   app:
-    name: '@project.name@'
-    version: '@project.version@'
-    description: '@project.description@'
+    name: @project.name@
+    version: @project.version@
+    description: @project.description@
   java:
-    source: '@java.version@'
-  built-by: '@user.name@'
-
-server:
-  port: 8080
+    version: @java.version@
+  build:
+    artifact: @project.artifactId@
+    group: @project.groupId@
