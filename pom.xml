@@ -15,7 +15,7 @@
     <artifactId>payflow</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>payflow</name>
-    <description>A payment flow management application</description>
+    <description>Async Payment Processing System</description>
 
     <properties>
         <java.version>17</java.version>

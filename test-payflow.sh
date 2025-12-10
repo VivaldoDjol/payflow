@@ -73,7 +73,7 @@ echo -e "\n"
 # 10. Special Characters in Idempotency Key
 echo "10. Special Characters in Idempotency Key"
 curl -X POST http://localhost:8080/orders \
-  -H "Idempotency-Key: test-special-chars_123-ABC" \
+  -H "Idempotency-Key: test-special-chars_123-ABC@" \
   -H "Content-Type: application/json" \
   -d '{"amount":10.00,"currency":"CAD"}'
 echo -e "\n"

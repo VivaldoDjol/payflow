@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_EXCHANGE;
 import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_ROUTING_KEY;
@@ -24,6 +25,7 @@ import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_ROUTING_KEY;
 @Transactional
 public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+    private static final Pattern IDEMPOTENCY_KEY_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
 
@@ -47,6 +49,10 @@ public class OrderService {
 
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             idempotencyKey = UUID.randomUUID().toString();
+        }
+
+        if (!IDEMPOTENCY_KEY_PATTERN.matcher(idempotencyKey).matches()) {
+            throw new IllegalArgumentException("Idempotency key can only contain alphanumeric characters, underscores, and hyphens");
         }
 
         final String finalIdempotencyKey = idempotencyKey;
