@@ -46,3 +46,12 @@ info:
   build:
     artifact: @project.artifactId@
     group: @project.groupId@
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  show-actuator: true
