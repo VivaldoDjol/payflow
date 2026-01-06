@@ -60,7 +60,11 @@ Endpoints include:
 
    Or with Docker:
    ```bash
-   docker-compose up -d --build
+   docker-compose up -d --build 
+   ```
+   Or use this Other Docker:
+    ```bash
+   docker compose up -d --build 
    ```
 
 3. **Access the application**:
