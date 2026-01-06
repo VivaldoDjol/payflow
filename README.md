@@ -18,18 +18,18 @@ An idempotent payment order service built with **Java 17**, **Spring Boot 3**, a
 
 ## 🛠️ Tech Stack
 
-| Layer          | Technology                    |
-|----------------|-------------------------------|
-| Language       | Java 17                       |
-| Framework      | Spring Boot 3.5               |
-| Web            | Spring Web, Validation        |
-| Data           | Spring Data JPA, PostgreSQL   |
-| Messaging      | RabbitMQ (via Spring AMQP)    |
-| Testing        | JUnit 5, Mockito, AssertJ     |
-| DevOps         | Docker, Docker Compose        |
-| Documentation  | SpringDoc OpenAPI (Swagger)   |
-| Observability  | Spring Boot Actuator          |
-| Build          | Maven                         |
+| Layer          | Technology                  |
+|----------------|-----------------------------|
+| Language       | Java 17                     |
+| Framework      | Spring Boot 3.3.5           |
+| Web            | Spring Web, Validation      |
+| Data           | Spring Data JPA, PostgreSQL |
+| Messaging      | RabbitMQ (via Spring AMQP)  |
+| Testing        | JUnit 5, Mockito, AssertJ   |
+| DevOps         | Docker, Docker Compose      |
+| Documentation  | SpringDoc OpenAPI (Swagger) |
+| Observability  | Spring Boot Actuator        |
+| Build          | Maven                       |
 
 ---
 
@@ -77,3 +77,14 @@ Endpoints include:
 Run unit and integration tests:
 ```bash
 ./mvnw test
+```
+
+Run integration tests with Testcontainers (requires Docker):
+```bash
+./mvnw verify
+```
+
+Run comprehensive API tests with curl script:
+```bash
+./test-payflow.sh
+```
