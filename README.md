@@ -4,19 +4,19 @@ An idempotent payment order service built with **Java 17**, **Spring Boot 3**, a
 
 ---
 
-## 🚀 Features
+## Features
 
-- ✅ **Idempotent Order Creation** – Safe retries with `Idempotency-Key`
-- ✅ **Async Payment Processing** – Orders accepted instantly; payments handled in background via RabbitMQ
-- ✅ **PostgreSQL persistence** – Uses a production-grade relational database for all order data
-- ✅ **Full Test Coverage** – Unit (Mockito) + Integration (Testcontainers-ready)
-- ✅ **Docker-First** – One-command setup with PostgreSQL + RabbitMQ
-- ✅ **Comprehensive API Documentation** – Interactive Swagger UI with detailed examples
-- ✅ **Production-ready Observability** – Health checks, metrics, and logging
+- **Idempotent Order Creation** – Safe retries with `Idempotency-Key`
+- **Async Payment Processing** – Orders accepted instantly; payments handled in background via RabbitMQ
+- **PostgreSQL persistence** – Uses a production-grade relational database for all order data
+- **Full Test Coverage** – Unit (Mockito) + Integration (Testcontainers-ready)
+- **Docker-First** – One-command setup with PostgreSQL + RabbitMQ
+- **Comprehensive API Documentation** – Interactive Swagger UI with detailed examples
+- **Production-ready Observability** – Health checks, metrics, and logging
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer          | Technology                  |
 |----------------|-----------------------------|
@@ -33,7 +33,7 @@ An idempotent payment order service built with **Java 17**, **Spring Boot 3**, a
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 Interactive API documentation available at:
 - **API Documentation**: `http://localhost:8080/swagger-ui.html`
@@ -46,7 +46,7 @@ Endpoints include:
 
 ---
 
-## ▶️ Run Locally
+## Run Locally
 
 1. **Start dependencies** (PostgreSQL + RabbitMQ):
    ```bash
@@ -76,7 +76,7 @@ Endpoints include:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Run unit and integration tests:
 ```bash
