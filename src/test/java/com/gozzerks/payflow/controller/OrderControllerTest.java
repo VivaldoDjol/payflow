@@ -34,7 +34,7 @@ class OrderControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockitoBean  // ✅ FIXED: Using Spring Boot 3.4+ annotation
+    @MockitoBean
     private OrderService orderService;
 
     @Nested
