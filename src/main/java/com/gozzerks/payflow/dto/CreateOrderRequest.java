@@ -1,15 +1,13 @@
 package com.gozzerks.payflow.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
 @Schema(description = "Request object for creating a new payment order")
 public record CreateOrderRequest(
+        @NotNull(message = "Amount is required")
         @DecimalMin(value = "0.01", message = "Amount must be at least 0.01")
         @DecimalMax(value = "177777.7777", message = "Amount exceeds maximum allowed value of 177777.7777")
         @Schema(
