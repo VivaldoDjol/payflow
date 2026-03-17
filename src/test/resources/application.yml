@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: payflow
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+  # Database and RabbitMQ will be configured by Testcontainers via @ServiceConnection
