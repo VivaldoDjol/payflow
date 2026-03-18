@@ -222,6 +222,23 @@ class OrderControllerTest {
         }
 
         @Test
+        @DisplayName("Should return 400 when service throws IllegalArgumentException")
+        void shouldReturn400WhenServiceThrowsIllegalArgumentException() throws Exception {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            when(orderService.createOrder(any(CreateOrderRequest.class), any()))
+                    .thenThrow(new IllegalArgumentException("Amount must be greater than zero"));
+
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .header("Idempotency-Key", "test-key-123")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Invalid Request"));
+        }
+
+        @Test
         @DisplayName("Should return 500 when service throws unexpected exception")
         void shouldReturn500ForUnexpectedException() throws Exception {
             // Arrange
