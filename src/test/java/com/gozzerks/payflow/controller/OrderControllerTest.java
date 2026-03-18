@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -189,6 +190,52 @@ class OrderControllerTest {
             // Act & Assert
             mockMvc.perform(get("/orders/{id}", "invalid"))
                     .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GlobalExceptionHandler - additional cases")
+    class GlobalExceptionHandlerTests {
+
+        @Test
+        @DisplayName("Should return 400 with 'Invalid Request Body' when JSON is malformed")
+        void shouldReturn400ForMalformedJson() throws Exception {
+            // Arrange
+            String malformedJson = "{";
+
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .header("Idempotency-Key", "test-key-123")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(malformedJson))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Invalid Request Body"));
+        }
+
+        @Test
+        @DisplayName("Should return 405 when HTTP method is not supported")
+        void shouldReturn405ForUnsupportedMethod() throws Exception {
+            // Act & Assert
+            mockMvc.perform(delete("/orders/1"))
+                    .andExpect(status().isMethodNotAllowed())
+                    .andExpect(jsonPath("$.title").value("Method Not Allowed"));
+        }
+
+        @Test
+        @DisplayName("Should return 500 when service throws unexpected exception")
+        void shouldReturn500ForUnexpectedException() throws Exception {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            when(orderService.createOrder(any(CreateOrderRequest.class), any()))
+                    .thenThrow(new RuntimeException("Unexpected error"));
+
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .header("Idempotency-Key", "test-key-123")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isInternalServerError())
+                    .andExpect(jsonPath("$.title").value("Internal Server Error"));
         }
     }
 }
