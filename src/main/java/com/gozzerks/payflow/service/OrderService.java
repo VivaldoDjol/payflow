@@ -51,6 +51,10 @@ public class OrderService {
             idempotencyKey = UUID.randomUUID().toString();
         }
 
+        if (idempotencyKey.length() > 64) {
+            throw new IllegalArgumentException("Idempotency key must not exceed 64 characters");
+        }
+
         if (!IDEMPOTENCY_KEY_PATTERN.matcher(idempotencyKey).matches()) {
             throw new IllegalArgumentException("Idempotency key can only contain alphanumeric characters, underscores, and hyphens");
         }

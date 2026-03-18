@@ -325,6 +325,21 @@ class OrderServiceTest {
 
             verify(orderRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("Should throw exception when idempotency key exceeds 64 characters")
+        void shouldThrowExceptionWhenIdempotencyKeyIsTooLong() {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            String tooLongKey = "a".repeat(65);
+
+            // Act & Assert
+            assertThatThrownBy(() -> orderService.createOrder(request, tooLongKey))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Idempotency key must not exceed 64 characters");
+
+            verify(orderRepository, never()).save(any());
+        }
     }
 
     @Nested
