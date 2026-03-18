@@ -20,7 +20,9 @@ public class HomeController {
                 "message", "Welcome to PayFlow API",
                 "documentation", "/swagger-ui/index.html",
                 "api-docs", "/v3/api-docs",
-                "health", "/actuator/health"
+                "health", "/actuator/health",
+                "metrics", "/actuator/metrics",
+                "rabbitmq", "http://localhost:15672"
         );
     }
 }

@@ -25,6 +25,8 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.message").value("Welcome to PayFlow API"))
                 .andExpect(jsonPath("$.documentation").value("/swagger-ui/index.html"))
                 .andExpect(jsonPath("$.['api-docs']").value("/v3/api-docs"))
-                .andExpect(jsonPath("$.health").value("/actuator/health"));
+                .andExpect(jsonPath("$.health").value("/actuator/health"))
+                .andExpect(jsonPath("$.metrics").value("/actuator/metrics"))
+                .andExpect(jsonPath("$.rabbitmq").value("http://localhost:15672"));
     }
 }
