@@ -10,6 +10,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -57,10 +59,11 @@ class PaymentConsumerTest {
         doThrow(new RuntimeException("Payment gateway error"))
                 .when(paymentService).processPayment(1L);
 
-        // Act & Assert - Exception should propagate for RabbitMQ retry
+        // Act & Assert - Wrapped as AmqpRejectAndDontRequeueException to route to DLQ
         assertThatThrownBy(() -> paymentConsumer.handlePaymentRequest(event))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Payment gateway error");
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasCauseInstanceOf(RuntimeException.class)
+                .cause().hasMessageContaining("Payment gateway error");
 
         verify(paymentService, times(1)).processPayment(1L);
     }

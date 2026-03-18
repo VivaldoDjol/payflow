@@ -3,6 +3,7 @@ package com.gozzerks.payflow.event;
 import com.gozzerks.payflow.service.PaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +19,13 @@ public class PaymentConsumer {
 
     @RabbitListener(queues = "payment.queue")
     public void handlePaymentRequest(PaymentRequestedEvent event) {
-        log.info("📥 Processing payment for order {} ({} {})",
-                event.orderId(), event.amount(), event.currency());
-        paymentService.processPayment(event.orderId());
+        log.info("Processing payment for order {} (idempotencyKey: {}) ({} {}) ",
+                event.orderId(), event.idempotencyKey(), event.amount(), event.currency());
+        try {
+            paymentService.processPayment(event.orderId());
+        } catch (RuntimeException ex) {
+            log.error("Payment processing failed for order {} (idempotencyKey: {}), routing to DLQ: {}", event.orderId(), event.idempotencyKey(), ex.getMessage());
+            throw new AmqpRejectAndDontRequeueException(ex);
+        }
     }
 }
