@@ -5,4 +5,5 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+    open-in-view: false
   # Database and RabbitMQ will be configured by Testcontainers via @ServiceConnection
