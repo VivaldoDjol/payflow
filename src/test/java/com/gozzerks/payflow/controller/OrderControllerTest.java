@@ -210,6 +210,51 @@ class OrderControllerTest {
     }
 
     @Nested
+    @DisplayName("Security - 401/403 enforcement")
+    class SecurityTests {
+
+        @Test
+        @DisplayName("Should return 401 when POST /orders has no JWT")
+        void shouldReturn401WhenPostWithoutJwt() throws Exception {
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+
+            mockMvc.perform(post("/orders")
+                            .header("Idempotency-Key", "test-key-no-jwt")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when POST /orders has wrong scope")
+        void shouldReturn403WhenPostWithReadScope() throws Exception {
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+
+            mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:read"))
+                            .header("Idempotency-Key", "test-key-wrong-scope")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("Should return 401 when GET /orders/{id} has no JWT")
+        void shouldReturn401WhenGetWithoutJwt() throws Exception {
+            mockMvc.perform(get("/orders/{id}", 1L))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("Should return 403 when GET /orders/{id} has wrong scope")
+        void shouldReturn403WhenGetWithWriteScope() throws Exception {
+            mockMvc.perform(get("/orders/{id}", 1L)
+                            .with(jwt().authorities(() -> "SCOPE_orders:write")))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Nested
     @DisplayName("GlobalExceptionHandler - additional cases")
     class GlobalExceptionHandlerTests {
 
