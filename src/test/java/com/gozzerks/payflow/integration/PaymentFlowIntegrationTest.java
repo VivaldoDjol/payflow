@@ -1,5 +1,7 @@
 package com.gozzerks.payflow.integration;
 
+import com.gozzerks.payflow.config.TestJwtTokenFactory;
+import com.gozzerks.payflow.config.TestSecurityConfig;
 import com.gozzerks.payflow.config.TestcontainersConfiguration;
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
@@ -29,7 +31,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * Uses Testcontainers for PostgreSQL and RabbitMQ to ensure realistic testing.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurityConfig.class})
 @DisplayName("Payment Flow Integration Tests")
 class PaymentFlowIntegrationTest {
 
@@ -312,8 +314,12 @@ class PaymentFlowIntegrationTest {
         @DisplayName("Should return 404 for non-existent order")
         void shouldReturn404ForNonExistentOrder() {
             // Act
-            ResponseEntity<OrderResponse> response = restTemplate.getForEntity(
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(TestJwtTokenFactory.generateToken("orders:read"));
+            ResponseEntity<OrderResponse> response = restTemplate.exchange(
                     "http://localhost:" + port + "/orders/999999",
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
                     OrderResponse.class
             );
 
@@ -334,6 +340,7 @@ class PaymentFlowIntegrationTest {
     private ResponseEntity<OrderResponse> createOrder(CreateOrderRequest request, String idempotencyKey) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(TestJwtTokenFactory.generateToken("orders:write"));
         if (idempotencyKey != null) {
             headers.set("Idempotency-Key", idempotencyKey);
         }
@@ -348,8 +355,14 @@ class PaymentFlowIntegrationTest {
     }
 
     private OrderResponse getOrderById(Long id) {
-        ResponseEntity<OrderResponse> response = restTemplate.getForEntity(
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(TestJwtTokenFactory.generateToken("orders:read"));
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<OrderResponse> response = restTemplate.exchange(
                 "http://localhost:" + port + "/orders/" + id,
+                HttpMethod.GET,
+                entity,
                 OrderResponse.class
         );
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

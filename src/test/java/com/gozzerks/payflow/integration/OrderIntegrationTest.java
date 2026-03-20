@@ -1,5 +1,7 @@
 package com.gozzerks.payflow.integration;
 
+import com.gozzerks.payflow.config.TestJwtTokenFactory;
+import com.gozzerks.payflow.config.TestSecurityConfig;
 import com.gozzerks.payflow.config.TestcontainersConfiguration;
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
@@ -16,7 +18,7 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestSecurityConfig.class})
 class OrderIntegrationTest {
 
     @LocalServerPort
@@ -33,6 +35,7 @@ class OrderIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Idempotency-Key", "test-key-111");
+        headers.setBearerAuth(TestJwtTokenFactory.generateToken("orders:write"));
         HttpEntity<CreateOrderRequest> entity = new HttpEntity<>(request, headers);
 
         // When
