@@ -81,7 +81,9 @@ public class OrderController {
                     """
                             )
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Token lacks orders:write scope", content = @Content)
     })
     public ResponseEntity<OrderResponse> createOrder(
             @Parameter(
@@ -119,7 +121,9 @@ public class OrderController {
                             mediaType = "application/json",
                             schema = @Schema(implementation = String.class)
                     )
-            )
+            ),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Token lacks orders:read scope", content = @Content)
     })
     public ResponseEntity<OrderResponse> getOrder(
             @Parameter(
