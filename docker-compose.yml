@@ -40,14 +40,22 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
     container_name: payflow-keycloak
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8180:8080"
+    volumes:
+      - ./config/keycloak/payflow-realm.json:/opt/keycloak/data/import/payflow-realm.json:ro
     networks:
       - payflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo done"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # Spring Boot Application
   app:
@@ -71,6 +79,8 @@ services:
       db:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
     networks:
       - payflow-network
