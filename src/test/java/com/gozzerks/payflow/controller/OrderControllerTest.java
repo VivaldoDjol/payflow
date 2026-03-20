@@ -1,6 +1,7 @@
 package com.gozzerks.payflow.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gozzerks.payflow.config.SecurityConfig;
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
 import com.gozzerks.payflow.exception.OrderNotFoundException;
@@ -10,8 +11,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -20,12 +23,14 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(OrderController.class)
+@Import(SecurityConfig.class)
 @DisplayName("OrderController Tests")
 class OrderControllerTest {
 
@@ -37,6 +42,9 @@ class OrderControllerTest {
 
     @MockitoBean
     private OrderService orderService;
+
+    @MockitoBean
+    private JwtDecoder jwtDecoder;
 
     @Nested
     @DisplayName("POST /orders - Create Order")
@@ -61,6 +69,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-123")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -80,6 +89,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-456")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidJson))
@@ -97,6 +107,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-789")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -111,6 +122,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-999")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(invalidJson))
@@ -136,6 +148,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isCreated());
@@ -163,7 +176,8 @@ class OrderControllerTest {
             when(orderService.getOrderById(orderId)).thenReturn(response);
 
             // Act & Assert
-            mockMvc.perform(get("/orders/{id}", orderId))
+            mockMvc.perform(get("/orders/{id}", orderId)
+                            .with(jwt().authorities(() -> "SCOPE_orders:read")))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(orderId))
                     .andExpect(jsonPath("$.amount").value(29.99))
@@ -180,7 +194,8 @@ class OrderControllerTest {
                     .thenThrow(new OrderNotFoundException("Order not found with ID: " + orderId));
 
             // Act & Assert
-            mockMvc.perform(get("/orders/{id}", orderId))
+            mockMvc.perform(get("/orders/{id}", orderId)
+                            .with(jwt().authorities(() -> "SCOPE_orders:read")))
                     .andExpect(status().isNotFound());
         }
 
@@ -188,7 +203,8 @@ class OrderControllerTest {
         @DisplayName("Should return 400 when ID is invalid")
         void shouldReturn400WhenIdIsInvalid() throws Exception {
             // Act & Assert
-            mockMvc.perform(get("/orders/{id}", "invalid"))
+            mockMvc.perform(get("/orders/{id}", "invalid")
+                            .with(jwt().authorities(() -> "SCOPE_orders:read")))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -205,6 +221,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-123")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(malformedJson))
@@ -216,7 +233,8 @@ class OrderControllerTest {
         @DisplayName("Should return 405 when HTTP method is not supported")
         void shouldReturn405ForUnsupportedMethod() throws Exception {
             // Act & Assert
-            mockMvc.perform(delete("/orders/1"))
+            mockMvc.perform(delete("/orders/1")
+                            .with(jwt()))
                     .andExpect(status().isMethodNotAllowed())
                     .andExpect(jsonPath("$.title").value("Method Not Allowed"));
         }
@@ -231,6 +249,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-123")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -248,6 +267,7 @@ class OrderControllerTest {
 
             // Act & Assert
             mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
                             .header("Idempotency-Key", "test-key-123")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
