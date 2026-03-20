@@ -36,6 +36,19 @@ services:
       timeout: 5s
       retries: 5
 
+  # Keycloak for OAuth2/JWT token issuance
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: payflow-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    networks:
+      - payflow-network
+
   # Spring Boot Application
   app:
     build:
@@ -51,6 +64,7 @@ services:
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/payflow
     ports:
       - "8080:8080"
     depends_on:

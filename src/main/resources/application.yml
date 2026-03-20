@@ -1,6 +1,11 @@
 spring:
   application:
     name: payflow
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/payflow
   datasource:
     url: jdbc:postgresql://localhost:5433/payflow
     username: payflow
