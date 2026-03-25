@@ -1,6 +1,8 @@
 # PayFlow – Async Payment Processing System (Java/Spring Boot)
 
-An idempotent payment order service built with **Java 17**, **Spring Boot 3**, and **RabbitMQ**.
+[![CI](https://github.com/VivaldoDjol/payflow/actions/workflows/ci.yml/badge.svg)](https://github.com/VivaldoDjol/payflow/actions/workflows/ci.yml)
+
+An idempotent payment order service built with **Java 21**, **Spring Boot 3.4**, and **RabbitMQ**.
 
 ---
 
@@ -20,12 +22,14 @@ An idempotent payment order service built with **Java 17**, **Spring Boot 3**, a
 
 | Layer          | Technology                  |
 |----------------|-----------------------------|
-| Language       | Java 17                     |
-| Framework      | Spring Boot 3.3.5           |
+| Language       | Java 21                     |
+| Framework      | Spring Boot 3.4.5           |
 | Web            | Spring Web, Validation      |
 | Data           | Spring Data JPA, PostgreSQL |
 | Messaging      | RabbitMQ (via Spring AMQP)  |
 | Testing        | JUnit 5, Mockito, AssertJ   |
+| Security       | OAuth2/JWT, Keycloak        |
+| CI/CD          | GitHub Actions, GHCR        |
 | DevOps         | Docker, Docker Compose      |
 | Documentation  | SpringDoc OpenAPI (Swagger) |
 | Observability  | Spring Boot Actuator        |
