@@ -41,6 +41,41 @@ class PaymentServiceTest {
     }
 
     @Nested
+    @DisplayName("Mark As Failed Tests")
+    class MarkAsFailedTests {
+
+        @Test
+        @DisplayName("Should permanently mark order as FAILED")
+        void shouldMarkOrderAsFailed() {
+            Long orderId = 1L;
+            Order order = new Order();
+            order.setId(orderId);
+            order.setStatus(OrderStatus.PROCESSING);
+
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+            when(orderRepository.save(any(Order.class))).thenReturn(order);
+
+            paymentService.markAsFailed(orderId);
+
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
+            verify(orderRepository).save(order);
+        }
+
+        @Test
+        @DisplayName("Should throw when order not found for markAsFailed")
+        void shouldThrowWhenOrderNotFoundForMarkAsFailed() {
+            Long nonExistentId = 999L;
+            when(orderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> paymentService.markAsFailed(nonExistentId))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Order not found: 999");
+
+            verify(orderRepository, never()).save(any());
+        }
+    }
+
+    @Nested
     @DisplayName("Process Payment Tests")
     class ProcessPaymentTests {
 

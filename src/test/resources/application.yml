@@ -6,6 +6,12 @@ spring:
       ddl-auto: create-drop
     show-sql: true
     open-in-view: false
+  rabbitmq:
+    listener:
+      simple:
+        observation-enabled: false
+    template:
+      observation-enabled: false
   # Database and RabbitMQ will be configured by Testcontainers via @ServiceConnection
 
 management:

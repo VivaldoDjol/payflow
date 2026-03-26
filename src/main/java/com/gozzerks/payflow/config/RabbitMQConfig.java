@@ -15,19 +15,23 @@ public class RabbitMQConfig {
     public static final String PAYMENT_ROUTING_KEY = "payment.routing.key";
     public static final String DLX = "dlx";
 
+    public static final int MAX_RETRIES = 3;
+
     @Bean
     public Queue paymentQueue() {
         return QueueBuilder.durable(PAYMENT_QUEUE)
                 .deadLetterExchange(DLX)
                 .deadLetterRoutingKey(PAYMENT_ROUTING_KEY)
-                .ttl(5000) // Retry after 5 seconds
-                .maxLength(3) // Max 3 retries (via redelivery count)
                 .build();
     }
 
     @Bean
     public Queue paymentDlq() {
-        return QueueBuilder.durable(PAYMENT_DLQ).build();
+        return QueueBuilder.durable(PAYMENT_DLQ)
+                .deadLetterExchange(PAYMENT_EXCHANGE)
+                .deadLetterRoutingKey(PAYMENT_ROUTING_KEY)
+                .ttl(5000)
+                .build();
     }
 
     @Bean

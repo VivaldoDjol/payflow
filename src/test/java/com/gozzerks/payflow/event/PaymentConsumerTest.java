@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.event;
 
+import com.gozzerks.payflow.config.RabbitMQConfig;
 import com.gozzerks.payflow.service.PaymentService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,8 +10,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -28,39 +33,28 @@ class PaymentConsumerTest {
     @Test
     @DisplayName("Should process payment request successfully")
     void shouldProcessPaymentRequestSuccessfully() {
-        // Arrange
         PaymentRequestedEvent event = new PaymentRequestedEvent(
-                1L,
-                new BigDecimal("29.99"),
-                "GBP",
-                "test-key-123"
-        );
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
 
         doNothing().when(paymentService).processPayment(1L);
 
-        // Act
-        paymentConsumer.handlePaymentRequest(event);
+        paymentConsumer.handlePaymentRequest(event, message);
 
-        // Assert
         verify(paymentService, times(1)).processPayment(1L);
     }
 
     @Test
-    @DisplayName("Should handle payment processing failure")
+    @DisplayName("Should handle payment processing failure and route to DLQ")
     void shouldHandlePaymentProcessingFailure() {
-        // Arrange
         PaymentRequestedEvent event = new PaymentRequestedEvent(
-                1L,
-                new BigDecimal("29.99"),
-                "GBP",
-                "test-key-123"
-        );
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
 
         doThrow(new RuntimeException("Payment gateway error"))
                 .when(paymentService).processPayment(1L);
 
-        // Act & Assert - Wrapped as AmqpRejectAndDontRequeueException to route to DLQ
-        assertThatThrownBy(() -> paymentConsumer.handlePaymentRequest(event))
+        assertThatThrownBy(() -> paymentConsumer.handlePaymentRequest(event, message))
                 .isInstanceOf(AmqpRejectAndDontRequeueException.class)
                 .hasCauseInstanceOf(RuntimeException.class)
                 .cause().hasMessageContaining("Payment gateway error");
@@ -71,22 +65,35 @@ class PaymentConsumerTest {
     @Test
     @DisplayName("Should extract correct order ID from event")
     void shouldExtractCorrectOrderIdFromEvent() {
-        // Arrange
         Long expectedOrderId = 42L;
         PaymentRequestedEvent event = new PaymentRequestedEvent(
-                expectedOrderId,
-                new BigDecimal("100.00"),
-                "USD",
-                "test-key-456"
-        );
+                expectedOrderId, new BigDecimal("100.00"), "USD", "test-key-456");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
 
         doNothing().when(paymentService).processPayment(expectedOrderId);
 
-        // Act
-        paymentConsumer.handlePaymentRequest(event);
+        paymentConsumer.handlePaymentRequest(event, message);
 
-        // Assert
         verify(paymentService).processPayment(expectedOrderId);
         verifyNoMoreInteractions(paymentService);
+    }
+
+    @Test
+    @DisplayName("Should mark order as FAILED after max retries exceeded")
+    void shouldMarkAsFailedAfterMaxRetries() {
+        PaymentRequestedEvent event = new PaymentRequestedEvent(
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+
+        Message message = MessageBuilder.withBody(new byte[0]).build();
+        message.getMessageProperties().getHeaders().put("x-death", List.of(
+                Map.of("queue", RabbitMQConfig.PAYMENT_QUEUE,
+                        "reason", "rejected",
+                        "count", (long) RabbitMQConfig.MAX_RETRIES)
+        ));
+
+        paymentConsumer.handlePaymentRequest(event, message);
+
+        verify(paymentService).markAsFailed(1L);
+        verify(paymentService, never()).processPayment(anyLong());
     }
 }

@@ -22,6 +22,15 @@ public class PaymentService {
     }
 
     @Transactional
+    public void markAsFailed(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+        order.setStatus(OrderStatus.FAILED);
+        orderRepository.save(order);
+        log.error("Order {} permanently marked as FAILED after max retries", orderId);
+    }
+
+    @Transactional
     public void processPayment(Long orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));

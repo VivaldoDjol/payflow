@@ -8,6 +8,7 @@
                 <timestamp>
                     <timeZone>UTC</timeZone>
                 </timestamp>
+                <mdc/>
                 <pattern>
                     <pattern>
                         {
