@@ -7,3 +7,7 @@ spring:
     show-sql: true
     open-in-view: false
   # Database and RabbitMQ will be configured by Testcontainers via @ServiceConnection
+
+management:
+  tracing:
+    enabled: false
