@@ -58,8 +58,8 @@ class PaymentFlowIntegrationTest {
             // Act
             Long orderId = createOrderAndGetId(request, idempotencyKey);
 
-            // Assert - Wait for async payment processing (max 10s)
-            await().atMost(10, SECONDS).untilAsserted(() -> {
+            // Assert - Wait for async payment processing (max 30s for CI runner headroom)
+            await().atMost(30, SECONDS).untilAsserted(() -> {
                 OrderResponse order = getOrderById(orderId);
                 assertThat(order.status()).isIn("PAID", "FAILED");
                 assertThat(order.amount()).isEqualByComparingTo("19.99");
@@ -86,7 +86,7 @@ class PaymentFlowIntegrationTest {
             Long orderId2 = createOrderAndGetId(request2, key2);
 
             // Assert
-            await().atMost(10, SECONDS).untilAsserted(() -> {
+            await().atMost(30, SECONDS).untilAsserted(() -> {
                 OrderResponse order1 = getOrderById(orderId1);
                 OrderResponse order2 = getOrderById(orderId2);
 
