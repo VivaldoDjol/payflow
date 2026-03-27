@@ -89,6 +89,12 @@ resilience4j:
         waitDuration: 500ms
         retryExceptions:
           - com.gozzerks.payflow.exception.PaymentGatewayException
+  ratelimiter:
+    instances:
+      createOrder:
+        limitForPeriod: 50
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
 
 springdoc:
   swagger-ui:

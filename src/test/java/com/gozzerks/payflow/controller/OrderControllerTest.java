@@ -6,6 +6,9 @@ import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
 import com.gozzerks.payflow.exception.OrderNotFoundException;
 import com.gozzerks.payflow.service.OrderService;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import static org.mockito.Mockito.mock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -318,6 +321,42 @@ class OrderControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.title").value("Internal Server Error"));
+        }
+
+        @Test
+        @DisplayName("Should return 429 when rate limit is exceeded")
+        void shouldReturn429WhenRateLimitExceeded() throws Exception {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            when(orderService.createOrder(any(CreateOrderRequest.class), any()))
+                    .thenThrow(mock(RequestNotPermitted.class));
+
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
+                            .header("Idempotency-Key", "test-key-rate")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.title").value("Too Many Requests"));
+        }
+
+        @Test
+        @DisplayName("Should return 503 when circuit breaker is open")
+        void shouldReturn503WhenCircuitBreakerOpen() throws Exception {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            when(orderService.createOrder(any(CreateOrderRequest.class), any()))
+                    .thenThrow(mock(CallNotPermittedException.class));
+
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
+                            .header("Idempotency-Key", "test-key-cb")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isServiceUnavailable())
+                    .andExpect(jsonPath("$.title").value("Service Unavailable"));
         }
     }
 }

@@ -3,6 +3,7 @@ package com.gozzerks.payflow.controller;
 import com.gozzerks.payflow.dto.CreateOrderRequest;
 import com.gozzerks.payflow.dto.OrderResponse;
 import com.gozzerks.payflow.service.OrderService;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,6 +31,7 @@ public class OrderController {
     }
 
     @PostMapping
+    @RateLimiter(name = "createOrder")
     @Operation(
             summary = "Create a new payment order",
             description = "Creates a new payment order with the provided amount and currency. " +
@@ -83,7 +85,8 @@ public class OrderController {
                     )
             ),
             @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Token lacks orders:write scope", content = @Content)
+            @ApiResponse(responseCode = "403", description = "Token lacks orders:write scope", content = @Content),
+            @ApiResponse(responseCode = "429", description = "Rate limit exceeded", content = @Content)
     })
     public ResponseEntity<OrderResponse> createOrder(
             @Parameter(
