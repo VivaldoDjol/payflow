@@ -4,6 +4,7 @@ import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
 import com.gozzerks.payflow.repository.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class PaymentService {
         log.error("Order {} permanently marked as FAILED after max retries", orderId);
     }
 
+    @CircuitBreaker(name = "paymentGateway")
     @Transactional
     public void processPayment(Long orderId) {
         Order order = orderRepository.findById(orderId)

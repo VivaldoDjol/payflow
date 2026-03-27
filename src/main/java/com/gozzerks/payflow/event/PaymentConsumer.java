@@ -2,6 +2,7 @@ package com.gozzerks.payflow.event;
 
 import com.gozzerks.payflow.config.RabbitMQConfig;
 import com.gozzerks.payflow.service.PaymentService;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
@@ -37,6 +38,10 @@ public class PaymentConsumer {
 
         try {
             paymentService.processPayment(event.orderId());
+        } catch (CallNotPermittedException ex) {
+            log.warn("Circuit breaker OPEN for order {}, routing to DLQ for later retry",
+                    event.orderId());
+            throw new AmqpRejectAndDontRequeueException(ex);
         } catch (RuntimeException ex) {
             log.error("Payment processing failed for order {} (attempt {}), routing to DLQ: {}",
                     event.orderId(), retryCount + 1, ex.getMessage());
