@@ -1,6 +1,7 @@
 package com.gozzerks.payflow.event;
 
 import com.gozzerks.payflow.config.RabbitMQConfig;
+import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.service.PaymentService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,12 +52,12 @@ class PaymentConsumerTest {
                 1L, new BigDecimal("29.99"), "GBP", "test-key-123");
         Message message = MessageBuilder.withBody(new byte[0]).build();
 
-        doThrow(new RuntimeException("Payment gateway error"))
+        doThrow(new PaymentGatewayException("Payment gateway error"))
                 .when(paymentService).processPayment(1L);
 
         assertThatThrownBy(() -> paymentConsumer.handlePaymentRequest(event, message))
                 .isInstanceOf(AmqpRejectAndDontRequeueException.class)
-                .hasCauseInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(PaymentGatewayException.class)
                 .cause().hasMessageContaining("Payment gateway error");
 
         verify(paymentService, times(1)).processPayment(1L);

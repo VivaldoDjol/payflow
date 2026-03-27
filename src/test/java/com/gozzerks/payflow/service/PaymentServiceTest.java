@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.service;
 
+import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
 import com.gozzerks.payflow.repository.OrderRepository;
@@ -120,7 +121,7 @@ class PaymentServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> paymentService.processPayment(orderId))
-                    .isInstanceOf(RuntimeException.class)
+                    .isInstanceOf(PaymentGatewayException.class)
                     .hasMessage("Payment gateway error");
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);

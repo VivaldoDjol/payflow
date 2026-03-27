@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.service;
 
+import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
 import com.gozzerks.payflow.repository.OrderRepository;
@@ -43,7 +44,7 @@ public class PaymentService {
         } else {
             order.setStatus(OrderStatus.FAILED);
             log.warn("Payment failed for order {}", orderId);
-            throw new RuntimeException("Payment gateway error");
+            throw new PaymentGatewayException("Payment gateway error");
         }
         orderRepository.save(order);
     }
