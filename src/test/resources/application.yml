@@ -35,3 +35,11 @@ resilience4j:
           - com.gozzerks.payflow.exception.PaymentGatewayException
         ignoreExceptions:
           - java.lang.IllegalArgumentException
+  retry:
+    retryAspectOrder: 2
+    instances:
+      paymentGateway:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - com.gozzerks.payflow.exception.PaymentGatewayException
