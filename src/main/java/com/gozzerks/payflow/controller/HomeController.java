@@ -22,7 +22,8 @@ public class HomeController {
                 "api-docs", "/v3/api-docs",
                 "health", "/actuator/health",
                 "metrics", "/actuator/metrics",
-                "rabbitmq", "http://localhost:15672"
+                "rabbitmq", "http://localhost:15672",
+                "zipkin", "http://localhost:9411"
         );
     }
 }

@@ -57,6 +57,20 @@ services:
       retries: 10
       start_period: 30s
 
+  # Zipkin for distributed tracing
+  zipkin:
+    image: openzipkin/zipkin:3
+    container_name: payflow-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - payflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9411/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Spring Boot Application
   app:
     build:
@@ -73,6 +87,7 @@ services:
       SPRING_RABBITMQ_PASSWORD: guest
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/payflow
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
     ports:
       - "8080:8080"
     depends_on:
@@ -81,6 +96,8 @@ services:
       rabbitmq:
         condition: service_healthy
       keycloak:
+        condition: service_healthy
+      zipkin:
         condition: service_healthy
     networks:
       - payflow-network

@@ -35,6 +35,7 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.['api-docs']").value("/v3/api-docs"))
                 .andExpect(jsonPath("$.health").value("/actuator/health"))
                 .andExpect(jsonPath("$.metrics").value("/actuator/metrics"))
-                .andExpect(jsonPath("$.rabbitmq").value("http://localhost:15672"));
+                .andExpect(jsonPath("$.rabbitmq").value("http://localhost:15672"))
+                .andExpect(jsonPath("$.zipkin").value("http://localhost:9411"));
     }
 }
