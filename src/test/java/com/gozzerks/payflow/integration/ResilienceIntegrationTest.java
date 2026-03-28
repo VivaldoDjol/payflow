@@ -100,7 +100,7 @@ class ResilienceIntegrationTest {
             RateLimiter rl = rateLimiterRegistry.rateLimiter("createOrder");
 
             assertThat(rl).isNotNull();
-            assertThat(rl.getRateLimiterConfig().getLimitForPeriod()).isEqualTo(50);
+            assertThat(rl.getRateLimiterConfig().getLimitForPeriod()).isEqualTo(10000);
             assertThat(rl.getRateLimiterConfig().getLimitRefreshPeriod())
                     .isEqualTo(Duration.ofSeconds(60));
             assertThat(rl.getRateLimiterConfig().getTimeoutDuration())
@@ -127,7 +127,7 @@ class ResilienceIntegrationTest {
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
             // Restore permits so other integration tests sharing this context aren't affected
-            rl.changeLimitForPeriod(50);
+            rl.changeLimitForPeriod(10000);
         }
     }
 
