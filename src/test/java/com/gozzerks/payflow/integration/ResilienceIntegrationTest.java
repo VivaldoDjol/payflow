@@ -125,6 +125,9 @@ class ResilienceIntegrationTest {
                     "rate-limit-" + UUID.randomUUID());
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+
+            // Restore permits so other integration tests sharing this context aren't affected
+            rl.changeLimitForPeriod(50);
         }
     }
 
