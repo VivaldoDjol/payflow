@@ -47,5 +47,5 @@ resilience4j:
     instances:
       createOrder:
         limitForPeriod: 50
-        limitRefreshPeriod: 1s
+        limitRefreshPeriod: 60s
         timeoutDuration: 0s

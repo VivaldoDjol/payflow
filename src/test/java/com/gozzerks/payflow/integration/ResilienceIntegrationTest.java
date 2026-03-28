@@ -102,7 +102,7 @@ class ResilienceIntegrationTest {
             assertThat(rl).isNotNull();
             assertThat(rl.getRateLimiterConfig().getLimitForPeriod()).isEqualTo(50);
             assertThat(rl.getRateLimiterConfig().getLimitRefreshPeriod())
-                    .isEqualTo(Duration.ofSeconds(1));
+                    .isEqualTo(Duration.ofSeconds(60));
             assertThat(rl.getRateLimiterConfig().getTimeoutDuration())
                     .isEqualTo(Duration.ZERO);
         }
