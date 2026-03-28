@@ -35,6 +35,9 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.['api-docs']").value("/v3/api-docs"))
                 .andExpect(jsonPath("$.health").value("/actuator/health"))
                 .andExpect(jsonPath("$.metrics").value("/actuator/metrics"))
+                .andExpect(jsonPath("$.circuitbreakers").value("/actuator/circuitbreakers"))
+                .andExpect(jsonPath("$.ratelimiters").value("/actuator/ratelimiters"))
+                .andExpect(jsonPath("$.retries").value("/actuator/retries"))
                 .andExpect(jsonPath("$.rabbitmq").value("http://localhost:15672"))
                 .andExpect(jsonPath("$.zipkin").value("http://localhost:9411"));
     }
