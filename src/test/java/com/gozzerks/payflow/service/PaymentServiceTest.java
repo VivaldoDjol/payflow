@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.service;
 
+import com.gozzerks.payflow.exception.OrderNotFoundException;
 import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
@@ -69,8 +70,8 @@ class PaymentServiceTest {
             when(orderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> paymentService.markAsFailed(nonExistentId))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessageContaining("Order not found: 999");
+                    .isInstanceOf(OrderNotFoundException.class)
+                    .hasMessageContaining("Order not found with ID: 999");
 
             verify(orderRepository, never()).save(any());
         }
@@ -105,8 +106,8 @@ class PaymentServiceTest {
         }
 
         @Test
-        @DisplayName("Should mark order as FAILED and throw exception when payment fails")
-        void shouldMarkOrderAsFailedAndThrowWhenPaymentFails() {
+        @DisplayName("Should throw exception when payment fails — status stays PROCESSING for retry")
+        void shouldThrowWhenPaymentFails() {
             // Arrange
             Long orderId = 2L;
             Order order = new Order();
@@ -124,7 +125,8 @@ class PaymentServiceTest {
                     .isInstanceOf(PaymentGatewayException.class)
                     .hasMessage("Payment gateway error");
 
-            assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
+            // Status stays PROCESSING — retry mechanism will handle it
+            assertThat(order.getStatus()).isEqualTo(OrderStatus.PROCESSING);
         }
 
         @Test
@@ -136,8 +138,8 @@ class PaymentServiceTest {
 
             // Act & Assert
             assertThatThrownBy(() -> paymentService.processPayment(nonExistentId))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessageContaining("Order not found: 999");
+                    .isInstanceOf(OrderNotFoundException.class)
+                    .hasMessageContaining("Order not found with ID: 999");
 
             verify(orderRepository, never()).save(any());
             verifyNoMoreInteractions(mockRandom);

@@ -43,7 +43,7 @@ public class OrderService {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
-        if (request.currency() == null || request.currency().isEmpty()) {
+        if (request.currency() == null || request.currency().isBlank()) {
             throw new IllegalArgumentException("Currency is required");
         }
 

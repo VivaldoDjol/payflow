@@ -1,5 +1,6 @@
 package com.gozzerks.payflow.service;
 
+import com.gozzerks.payflow.exception.OrderNotFoundException;
 import com.gozzerks.payflow.exception.PaymentGatewayException;
 import com.gozzerks.payflow.model.Order;
 import com.gozzerks.payflow.model.OrderStatus;
@@ -27,7 +28,13 @@ public class PaymentService {
     @Transactional
     public void markAsFailed(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
+
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.warn("Order {} is already PAID — refusing to mark as FAILED", orderId);
+            return;
+        }
+
         order.setStatus(OrderStatus.FAILED);
         orderRepository.save(order);
         log.error("Order {} permanently marked as FAILED after max retries", orderId);
@@ -38,7 +45,13 @@ public class PaymentService {
     @Transactional
     public void processPayment(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
+
+        if (order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.FAILED) {
+            log.warn("Order {} is already in terminal state {} — skipping payment processing",
+                    orderId, order.getStatus());
+            return;
+        }
 
         boolean success = random.nextInt(10) != 0; // 90% success rate
 
@@ -46,7 +59,6 @@ public class PaymentService {
             order.setStatus(OrderStatus.PAID);
             log.info("Payment succeeded for order {}", orderId);
         } else {
-            order.setStatus(OrderStatus.FAILED);
             log.warn("Payment failed for order {}", orderId);
             throw new PaymentGatewayException("Payment gateway error");
         }
