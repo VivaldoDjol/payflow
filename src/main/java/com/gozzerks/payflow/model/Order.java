@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "orders", uniqueConstraints = @UniqueConstraint(columnNames = "idempotency_key"))
@@ -30,7 +31,7 @@ public class Order {
 
     @Column(name = "idempotency_key", nullable = false, unique = true, length = 64)
     @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "Idempotency key can only contain alphanumeric characters, underscores, and hyphens")
-    private String idempotencyKey;
+    private String idempotencyKey = UUID.randomUUID().toString();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -40,7 +41,7 @@ public class Order {
     public Order(BigDecimal amount, String currency, String idempotencyKey) {
         this.amount = amount;
         this.currency = currency;
-        this.idempotencyKey = idempotencyKey;
+        this.idempotencyKey = (idempotencyKey != null) ? idempotencyKey : UUID.randomUUID().toString();
     }
 
     // Getters
@@ -63,6 +64,7 @@ public class Order {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Order order)) return false;
+        if (idempotencyKey == null || order.idempotencyKey == null) return false;
         return Objects.equals(idempotencyKey, order.idempotencyKey);
     }
 
