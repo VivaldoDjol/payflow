@@ -59,6 +59,7 @@ public class PaymentConsumer {
         return xDeath.stream()
                 .filter(entry -> RabbitMQConfig.PAYMENT_QUEUE.equals(entry.get("queue")))
                 .filter(entry -> "rejected".equals(entry.get("reason")))
+                .filter(entry -> entry.get("count") != null)
                 .mapToLong(entry -> ((Number) entry.get("count")).longValue())
                 .sum();
     }

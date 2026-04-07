@@ -342,6 +342,19 @@ class OrderControllerTest {
         }
 
         @Test
+        @DisplayName("Should return 415 when Content-Type is not application/json")
+        void shouldReturn415ForUnsupportedMediaType() throws Exception {
+            // Act & Assert
+            mockMvc.perform(post("/orders")
+                            .with(jwt().authorities(() -> "SCOPE_orders:write"))
+                            .header("Idempotency-Key", "test-key-415")
+                            .contentType(MediaType.TEXT_PLAIN)
+                            .content("not json"))
+                    .andExpect(status().isUnsupportedMediaType())
+                    .andExpect(jsonPath("$.title").value("Unsupported Media Type"));
+        }
+
+        @Test
         @DisplayName("Should return 503 when circuit breaker is open")
         void shouldReturn503WhenCircuitBreakerOpen() throws Exception {
             // Arrange
