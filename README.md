@@ -89,13 +89,13 @@ Failed payments are rejected (not requeued) and routed to `payment.dlq` via a de
 - **Rate Limiter** on `OrderController.createOrder()` - 50 requests per second with immediate rejection (0s timeout).
 
 ### OAuth2/JWT Security
-Stateless JWT authentication via Keycloak. Scope-based authorization:
+Stateless JWT authentication via Keycloak. Scope-based authorisation:
 - `POST /orders` requires `orders:write`
 - `GET /orders/{id}` requires `orders:read`
 - Public endpoints: `/`, `/actuator/**`, `/swagger-ui/**`, `/v3/api-docs/**`
 
 ### Distributed Tracing
-Full trace propagation from HTTP request through RabbitMQ to payment processing via Micrometer Tracing + Brave. Trace IDs appear in JSON-structured logs (via Logback MDC) and are exported to Zipkin for visualization.
+Full trace propagation from HTTP request through RabbitMQ to payment processing via Micrometer Tracing + Brave. Trace IDs appear in JSON-structured logs (via Logback MDC) and are exported to Zipkin for visualisation.
 
 ### Structured JSON Logging
 All application logs are output as JSON via Logstash Logback Encoder, including `timestamp`, `level`, `service`, `thread`, `logger`, `message`, `exception`, and MDC fields (`traceId`, `spanId`).
@@ -322,8 +322,8 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and 
 **Build & Test Job:**
 1. Checkout code
 2. Set up Java 21 (Temurin) with Maven cache
-3. Run `./mvnw clean verify` (compiles, runs all 75 tests, enforces 77% coverage)
-4. Upload JaCoCo report as artifact (14-day retention)
+3. Run `./mvnw clean verify` (compiles, runs all 205 tests, enforces 77% coverage)
+4. Upload JaCoCo report as artefact (14-day retention)
 
 **Docker Build & Push Job** (master branch only, after tests pass):
 1. Authenticate with GitHub Container Registry
