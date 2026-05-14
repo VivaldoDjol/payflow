@@ -307,7 +307,7 @@ Messages cycle between `payment.queue` and `payment.dlq` until either the paymen
 
 ### Test Infrastructure
 
-Integration tests use **Testcontainers** with `reuse = true` for PostgreSQL 16 and RabbitMQ 3.13. Containers are autoconfigured via `@ServiceConnection` — no manual URL/port wiring. Tracing and RabbitMQ observation are disabled in the test profile to avoid interference.
+Integration tests use **Testcontainers** with `reuse = true` for PostgreSQL 16 and RabbitMQ 3.13. Containers are autoconfigured via `@ServiceConnection` - no manual URL/port wiring. Tracing and RabbitMQ observation are disabled in the test profile to avoid interference.
 
 ### Code Coverage
 
@@ -322,7 +322,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and 
 **Build & Test Job:**
 1. Checkout code
 2. Set up Java 21 (Temurin) with Maven cache
-3. Run `./mvnw clean verify` (compiles, runs all 205 tests, enforces 77% coverage)
+3. Run `./mvnw clean verify` (compiles, runs all 211 tests, enforces 77% coverage)
 4. Upload JaCoCo report as artefact (14-day retention)
 
 **Docker Build & Push Job** (master branch only, after tests pass):
@@ -333,8 +333,8 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and 
 ### Docker Image
 
 The multi-stage Dockerfile produces a minimal runtime image:
-- **Builder stage:** `maven:3.9-eclipse-temurin-21` — compiles and packages the JAR
-- **Runtime stage:** `eclipse-temurin:21-jre-alpine` — runs as non-root user (`appuser`, UID 1001)
+- **Builder stage:** `maven:3.9-eclipse-temurin-21` - compiles and packages the JAR
+- **Runtime stage:** `eclipse-temurin:21-jre-alpine` - runs as non-root user (`appuser`, UID 1001)
 - **JVM flags:** `-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`
 - **Health check:** `curl -f http://localhost:8080/actuator/health`
 
