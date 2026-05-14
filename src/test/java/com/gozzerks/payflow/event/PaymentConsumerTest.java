@@ -80,6 +80,54 @@ class PaymentConsumerTest {
     }
 
     @Test
+    @DisplayName("Should wrap PaymentGatewayException with cause in AmqpRejectAndDontRequeueException")
+    void shouldWrapExceptionWithCause() {
+        PaymentRequestedEvent event = new PaymentRequestedEvent(
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
+        Throwable cause = new RuntimeException("upstream error");
+
+        doThrow(new PaymentGatewayException("Payment gateway error", cause))
+                .when(paymentService).processPayment(1L);
+
+        assertThatThrownBy(() -> paymentConsumer.handlePaymentRequest(event, message))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasCauseInstanceOf(PaymentGatewayException.class);
+
+        verify(paymentService).processPayment(1L);
+    }
+
+    @Test
+    @DisplayName("Should treat x-death entry with null count as zero retries")
+    void shouldTreatNullCountInXDeathAsZeroRetries() {
+        PaymentRequestedEvent event = new PaymentRequestedEvent(
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
+        Map<String, Object> entry = new java.util.HashMap<>();
+        entry.put("queue", RabbitMQConfig.PAYMENT_QUEUE);
+        entry.put("reason", "rejected");
+        entry.put("count", null);
+        message.getMessageProperties().getHeaders().put("x-death", List.of(entry));
+
+        paymentConsumer.handlePaymentRequest(event, message);
+
+        verify(paymentService).processPayment(1L);
+    }
+
+    @Test
+    @DisplayName("Should treat non-null but empty x-death list as zero retries")
+    void shouldTreatEmptyXDeathAsZeroRetries() {
+        PaymentRequestedEvent event = new PaymentRequestedEvent(
+                1L, new BigDecimal("29.99"), "GBP", "test-key-123");
+        Message message = MessageBuilder.withBody(new byte[0]).build();
+        message.getMessageProperties().getHeaders().put("x-death", List.of());
+
+        paymentConsumer.handlePaymentRequest(event, message);
+
+        verify(paymentService).processPayment(1L);
+    }
+
+    @Test
     @DisplayName("Should mark order as FAILED after max retries exceeded")
     void shouldMarkAsFailedAfterMaxRetries() {
         PaymentRequestedEvent event = new PaymentRequestedEvent(

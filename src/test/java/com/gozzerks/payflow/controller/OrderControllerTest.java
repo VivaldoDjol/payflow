@@ -371,5 +371,14 @@ class OrderControllerTest {
                     .andExpect(status().isServiceUnavailable())
                     .andExpect(jsonPath("$.title").value("Service Unavailable"));
         }
+
+        @Test
+        @DisplayName("Should return 404 for an unknown route")
+        void shouldReturn404ForUnknownRoute() throws Exception {
+            mockMvc.perform(get("/does-not-exist")
+                            .with(jwt()))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.title").value("Not Found"));
+        }
     }
 }

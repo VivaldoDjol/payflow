@@ -100,6 +100,26 @@ class OrderTest {
             // Act & Assert
             assertThat(order).isNotEqualTo(other);
         }
+
+        @Test
+        @DisplayName("Should not be equal when this idempotency key is null")
+        void shouldNotBeEqualWhenThisIdempotencyKeyIsNull() {
+            Order order1 = new Order();
+            order1.setIdempotencyKey(null);
+            Order order2 = new Order(new BigDecimal("10.00"), "GBP", "key-abc");
+
+            assertThat(order1).isNotEqualTo(order2);
+        }
+
+        @Test
+        @DisplayName("Should not be equal when other idempotency key is null")
+        void shouldNotBeEqualWhenOtherIdempotencyKeyIsNull() {
+            Order order1 = new Order(new BigDecimal("10.00"), "GBP", "key-abc");
+            Order order2 = new Order();
+            order2.setIdempotencyKey(null);
+
+            assertThat(order1).isNotEqualTo(order2);
+        }
     }
 
     @Nested
