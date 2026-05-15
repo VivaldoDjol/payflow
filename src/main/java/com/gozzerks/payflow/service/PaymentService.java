@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Random;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class PaymentService {
@@ -20,6 +21,9 @@ public class PaymentService {
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
     private final OrderRepository orderRepository;
     private final Random random = new Random();
+
+    @Value("${payment.failure.rate:10}")
+    private int failureRate = 10;
 
     public PaymentService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
@@ -53,7 +57,7 @@ public class PaymentService {
             return;
         }
 
-        boolean success = random.nextInt(10) != 0; // 90% success rate
+        boolean success = random.nextInt(Math.max(1, failureRate)) != 0;
 
         if (success) {
             order.setStatus(OrderStatus.PAID);

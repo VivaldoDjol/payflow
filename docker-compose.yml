@@ -88,6 +88,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/payflow
       MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+      PAYMENT_FAILURE_RATE: ${PAYMENT_FAILURE_RATE:-10}
     ports:
       - "8080:8080"
     depends_on:
