@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -339,6 +340,57 @@ class OrderServiceTest {
                     .hasMessageContaining("Idempotency key must not exceed 64 characters");
 
             verify(orderRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Should return existing order when a concurrent insert wins the race")
+        void shouldReturnExistingOrderOnConcurrentInsertRace() {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            String idempotencyKey = "race-key";
+
+            Order winningOrder = new Order();
+            winningOrder.setId(7L);
+            winningOrder.setAmount(new BigDecimal("29.9900"));
+            winningOrder.setCurrency("GBP");
+            winningOrder.setStatus(OrderStatus.PROCESSING);
+            winningOrder.setIdempotencyKey(idempotencyKey);
+            winningOrder.setCreatedAt(LocalDateTime.now());
+
+            // First lookup: not found (triggers insert). Recovery lookup: the winner's order.
+            when(orderRepository.findByIdempotencyKey(idempotencyKey))
+                    .thenReturn(Optional.empty())
+                    .thenReturn(Optional.of(winningOrder));
+            when(orderRepository.save(any(Order.class)))
+                    .thenThrow(new DataIntegrityViolationException("duplicate idempotency_key"));
+
+            // Act
+            OrderResponse response = orderService.createOrder(request, idempotencyKey);
+
+            // Assert
+            assertThat(response.id()).isEqualTo(7L);
+            assertThat(response.idempotencyKey()).isEqualTo(idempotencyKey);
+            verify(orderRepository, times(2)).findByIdempotencyKey(idempotencyKey);
+            verifyNoInteractions(rabbitTemplate);
+        }
+
+        @Test
+        @DisplayName("Should rethrow when insert fails and the order still cannot be found")
+        void shouldRethrowWhenRaceRecoveryFindsNothing() {
+            // Arrange
+            CreateOrderRequest request = new CreateOrderRequest(new BigDecimal("29.99"), "GBP");
+            String idempotencyKey = "race-key-2";
+
+            when(orderRepository.findByIdempotencyKey(idempotencyKey))
+                    .thenReturn(Optional.empty());
+            when(orderRepository.save(any(Order.class)))
+                    .thenThrow(new DataIntegrityViolationException("duplicate idempotency_key"));
+
+            // Act & Assert
+            assertThatThrownBy(() -> orderService.createOrder(request, idempotencyKey))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+
+            verifyNoInteractions(rabbitTemplate);
         }
     }
 

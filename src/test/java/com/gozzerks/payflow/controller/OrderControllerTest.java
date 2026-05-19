@@ -380,5 +380,14 @@ class OrderControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.title").value("Not Found"));
         }
+
+        @Test
+        @DisplayName("Should return 400 when path variable is blank")
+        void shouldReturn400ForBlankPathVariable() throws Exception {
+            mockMvc.perform(get("/orders/{id}", " ")
+                            .with(jwt().authorities(() -> "SCOPE_orders:read")))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Invalid Request"));
+        }
     }
 }

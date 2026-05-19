@@ -10,8 +10,8 @@ import com.gozzerks.payflow.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -22,7 +22,6 @@ import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_EXCHANGE;
 import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_ROUTING_KEY;
 
 @Service
-@Transactional
 public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
     private static final Pattern IDEMPOTENCY_KEY_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
@@ -63,28 +62,40 @@ public class OrderService {
 
         return orderRepository.findByIdempotencyKey(idempotencyKey)
                 .map(this::toOrderResponse)
-                .orElseGet(() -> {
-                    Order order = new Order();
-                    order.setAmount(request.amount().setScale(4, RoundingMode.HALF_UP));
-                    order.setCurrency(request.currency().toUpperCase());
-                    order.setStatus(OrderStatus.PROCESSING);
-                    order.setIdempotencyKey(finalIdempotencyKey);
-                    order.setCreatedAt(LocalDateTime.now());
+                .orElseGet(() -> insertOrder(request, finalIdempotencyKey));
+    }
 
-                    Order savedOrder = orderRepository.save(order);
+    private OrderResponse insertOrder(CreateOrderRequest request, String idempotencyKey) {
+        Order order = new Order();
+        order.setAmount(request.amount().setScale(4, RoundingMode.HALF_UP));
+        order.setCurrency(request.currency().toUpperCase());
+        order.setStatus(OrderStatus.PROCESSING);
+        order.setIdempotencyKey(idempotencyKey);
+        order.setCreatedAt(LocalDateTime.now());
 
-                    PaymentRequestedEvent event = new PaymentRequestedEvent(
-                            savedOrder.getId(),
-                            savedOrder.getAmount(),
-                            savedOrder.getCurrency(),
-                            savedOrder.getIdempotencyKey()
-                    );
+        Order savedOrder;
+        try {
+            savedOrder = orderRepository.save(order);
+        } catch (DataIntegrityViolationException ex) {
+            // A concurrent request with the same idempotency key won the insert race.
+            // Return the order it created so the response stays idempotent instead of 500.
+            log.info("Concurrent insert lost the race for idempotency key {} - returning existing order", idempotencyKey);
+            return orderRepository.findByIdempotencyKey(idempotencyKey)
+                    .map(this::toOrderResponse)
+                    .orElseThrow(() -> ex);
+        }
 
-                    rabbitTemplate.convertAndSend(PAYMENT_EXCHANGE, PAYMENT_ROUTING_KEY, event);
-                    log.info("Payment requested for order ID: {}", savedOrder.getId());
+        PaymentRequestedEvent event = new PaymentRequestedEvent(
+                savedOrder.getId(),
+                savedOrder.getAmount(),
+                savedOrder.getCurrency(),
+                savedOrder.getIdempotencyKey()
+        );
 
-                    return toOrderResponse(savedOrder);
-                });
+        rabbitTemplate.convertAndSend(PAYMENT_EXCHANGE, PAYMENT_ROUTING_KEY, event);
+        log.info("Payment requested for order ID: {}", savedOrder.getId());
+
+        return toOrderResponse(savedOrder);
     }
 
     public OrderResponse getOrderById(Long id) {

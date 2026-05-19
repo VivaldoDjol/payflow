@@ -45,11 +45,12 @@
       "defaultClientScopes": [
         "openid",
         "profile",
-        "email",
+        "email"
+      ],
+      "optionalClientScopes": [
         "orders:read",
         "orders:write"
-      ],
-      "optionalClientScopes": []
+      ]
     }
   ],
   "users": [
