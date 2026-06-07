@@ -5,7 +5,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/payflow
+          jwk-set-uri: http://localhost:8180/realms/payflow/protocol/openid-connect/certs
   datasource:
     url: jdbc:postgresql://localhost:5433/payflow
     username: payflow
