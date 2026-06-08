@@ -19,7 +19,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_EXCHANGE;
@@ -454,7 +455,7 @@ class OrderServiceEdgeCaseTest {
             existingOrder.setCurrency("USD");
             existingOrder.setStatus(OrderStatus.PAID); // Already paid
             existingOrder.setIdempotencyKey("paid-order-key");
-            existingOrder.setCreatedAt(LocalDateTime.now().minusHours(1));
+            existingOrder.setCreatedAt(Instant.now().minus(Duration.ofHours(1)));
 
             when(orderRepository.findByIdempotencyKey("paid-order-key"))
                     .thenReturn(Optional.of(existingOrder));
@@ -483,7 +484,7 @@ class OrderServiceEdgeCaseTest {
             failedOrder.setCurrency("GBP");
             failedOrder.setStatus(OrderStatus.FAILED);
             failedOrder.setIdempotencyKey("failed-key");
-            failedOrder.setCreatedAt(LocalDateTime.now().minusMinutes(30));
+            failedOrder.setCreatedAt(Instant.now().minus(Duration.ofMinutes(30)));
 
             when(orderRepository.findByIdempotencyKey("failed-key"))
                     .thenReturn(Optional.of(failedOrder));

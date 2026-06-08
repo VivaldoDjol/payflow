@@ -17,7 +17,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -44,7 +44,7 @@ class OrderControllerEdgeCaseTest {
     private JwtDecoder jwtDecoder;
 
     private static final OrderResponse SAMPLE_RESPONSE = new OrderResponse(
-            1L, new BigDecimal("29.99"), "GBP", "PROCESSING", "test-key", LocalDateTime.now()
+            1L, new BigDecimal("29.99"), "GBP", "PROCESSING", "test-key", Instant.now()
     );
 
     @Nested

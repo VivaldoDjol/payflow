@@ -21,7 +21,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +64,7 @@ class OrderControllerTest {
                     "GBP",
                     "PROCESSING",
                     "test-key-123",
-                    LocalDateTime.now()
+                    Instant.now()
             );
 
             when(orderService.createOrder(any(CreateOrderRequest.class), eq("test-key-123")))
@@ -143,7 +143,7 @@ class OrderControllerTest {
                     "GBP",
                     "PROCESSING",
                     null,
-                    LocalDateTime.now()
+                    Instant.now()
             );
 
             when(orderService.createOrder(any(CreateOrderRequest.class), eq(null)))
@@ -173,7 +173,7 @@ class OrderControllerTest {
                     "GBP",
                     "PROCESSING",
                     "test-key-123",
-                    LocalDateTime.now()
+                    Instant.now()
             );
 
             when(orderService.getOrderById(orderId)).thenReturn(response);

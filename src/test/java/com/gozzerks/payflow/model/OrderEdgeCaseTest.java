@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,9 +90,9 @@ class OrderEdgeCaseTest {
         @DisplayName("New order should have non-null createdAt timestamp")
         void newOrderShouldHaveCreatedAt() {
             // Arrange
-            LocalDateTime before = LocalDateTime.now();
+            Instant before = Instant.now();
             Order order = new Order();
-            LocalDateTime after = LocalDateTime.now();
+            Instant after = Instant.now();
 
             // Act & Assert
             assertThat(order.getCreatedAt()).isBetween(before, after);

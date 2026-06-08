@@ -14,7 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -71,7 +71,7 @@ public class OrderService {
         order.setCurrency(request.currency().toUpperCase());
         order.setStatus(OrderStatus.PROCESSING);
         order.setIdempotencyKey(idempotencyKey);
-        order.setCreatedAt(LocalDateTime.now());
+        order.setCreatedAt(Instant.now());
 
         Order savedOrder;
         try {

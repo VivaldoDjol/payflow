@@ -3,7 +3,7 @@ package com.gozzerks.payflow.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "Response object containing payment order details")
 public record OrderResponse(
@@ -23,5 +23,5 @@ public record OrderResponse(
         String idempotencyKey,
 
         @Schema(description = "Timestamp when the order was created", example = "2023-06-15T14:30:00")
-        LocalDateTime createdAt
+        Instant createdAt
 ) {}

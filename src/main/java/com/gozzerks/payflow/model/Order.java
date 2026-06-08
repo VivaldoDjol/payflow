@@ -5,7 +5,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -34,7 +34,7 @@ public class Order {
     private String idempotencyKey = UUID.randomUUID().toString();
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Instant createdAt = Instant.now();
 
     public Order() {}
 
@@ -50,7 +50,7 @@ public class Order {
     public String getCurrency() { return currency; }
     public OrderStatus getStatus() { return status; }
     public String getIdempotencyKey() { return idempotencyKey; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Instant getCreatedAt() { return createdAt; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
@@ -58,7 +58,7 @@ public class Order {
     public void setCurrency(String currency) { this.currency = currency; }
     public void setStatus(OrderStatus status) { this.status = status; }
     public void setIdempotencyKey(String idempotencyKey) { this.idempotencyKey = idempotencyKey; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
     @Override
     public boolean equals(Object o) {

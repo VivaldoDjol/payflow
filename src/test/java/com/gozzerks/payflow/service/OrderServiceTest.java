@@ -19,7 +19,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static com.gozzerks.payflow.config.RabbitMQConfig.PAYMENT_EXCHANGE;
@@ -59,12 +59,12 @@ class OrderServiceTest {
                 return order;
             });
 
-            LocalDateTime before = LocalDateTime.now();
+            Instant before = Instant.now();
 
             // Act
             OrderResponse response = orderService.createOrder(request, idempotencyKey);
 
-            LocalDateTime after = LocalDateTime.now();
+            Instant after = Instant.now();
 
             // Assert
             assertThat(response).isNotNull();
@@ -95,7 +95,7 @@ class OrderServiceTest {
             existingOrder.setCurrency("GBP");
             existingOrder.setStatus(OrderStatus.PROCESSING);
             existingOrder.setIdempotencyKey(idempotencyKey);
-            existingOrder.setCreatedAt(LocalDateTime.now());
+            existingOrder.setCreatedAt(Instant.now());
 
             when(orderRepository.findByIdempotencyKey(idempotencyKey))
                     .thenReturn(Optional.of(existingOrder));
@@ -355,7 +355,7 @@ class OrderServiceTest {
             winningOrder.setCurrency("GBP");
             winningOrder.setStatus(OrderStatus.PROCESSING);
             winningOrder.setIdempotencyKey(idempotencyKey);
-            winningOrder.setCreatedAt(LocalDateTime.now());
+            winningOrder.setCreatedAt(Instant.now());
 
             // First lookup: not found (triggers insert). Recovery lookup: the winner's order.
             when(orderRepository.findByIdempotencyKey(idempotencyKey))
@@ -409,7 +409,7 @@ class OrderServiceTest {
             order.setCurrency("GBP");
             order.setStatus(OrderStatus.PAID);
             order.setIdempotencyKey("test-key");
-            order.setCreatedAt(LocalDateTime.now());
+            order.setCreatedAt(Instant.now());
 
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 

@@ -54,7 +54,7 @@ public class OrderController {
                       "currency": "GBP",
                       "status": "PROCESSING",
                       "idempotencyKey": "key123",
-                      "createdAt": "2023-06-15T14:30:00"
+                      "createdAt": "2023-06-15T14:30:00Z"
                     }
                     """
                             )
