@@ -1,6 +1,5 @@
 package com.gozzerks.payflow.exception;
 
-import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -128,16 +127,6 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS,
                 "Rate limit exceeded. Please try again later.");
         problem.setTitle("Too Many Requests");
-        problem.setProperty("timestamp", Instant.now());
-        return problem;
-    }
-
-    @ExceptionHandler(CallNotPermittedException.class)
-    public ProblemDetail handleCircuitBreakerOpen(CallNotPermittedException ex) {
-        log.warn("Circuit breaker open: {}", ex.getMessage());
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
-                "Service temporarily unavailable. Please try again later.");
-        problem.setTitle("Service Unavailable");
         problem.setProperty("timestamp", Instant.now());
         return problem;
     }

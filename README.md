@@ -82,7 +82,7 @@ Failed payments are rejected (not requeued) and routed to `payment.dlq` via a de
 
 ### Resilience4j Fault Tolerance
 - **Circuit Breaker** on `PaymentService.processPayment()` - COUNT_BASED sliding window (10 calls), opens at 50% failure rate, auto-transitions to half-open after 30s. Only records `PaymentGatewayException`; ignores permanent errors like `IllegalArgumentException`.
-- **Retry** wraps the circuit breaker (aspect order 2 inside order 1) - 3 attempts with 500ms wait, only retries `PaymentGatewayException`.
+- **Retry** runs *inside* the circuit breaker (aspect order 2 inside order 1) - 3 attempts with 500ms wait, only retries `PaymentGatewayException`. Because the breaker is the outer aspect, it records one outcome per call (after retry finishes), so transient blips absorbed by retry never trip it - only failures that survive all 3 attempts count toward the failure rate.
 - **Rate Limiter** on `OrderController.createOrder()` - 50 requests per second with immediate rejection (0s timeout).
 
 ### OAuth2/JWT Security
@@ -200,7 +200,6 @@ All errors follow the RFC 9457 Problem Detail format:
 | 415    | Unsupported Media Type | Request body is not `application/json`                          |
 | 429    | Too Many Requests      | Rate limit exceeded (50 req/s)                                  |
 | 500    | Internal Server Error  | Unhandled server error                                          |
-| 503    | Service Unavailable    | Circuit breaker is open                                         |
 
 **Example error response:**
 ```json
@@ -370,7 +369,7 @@ The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and 
 **Build & Test Job:**
 1. Checkout code
 2. Set up Java 21 (Temurin) with Maven cache
-3. Run `./mvnw clean verify` (compiles, runs all 215 tests, enforces 77% coverage)
+3. Run `./mvnw clean verify` (compiles, runs all 214 tests, enforces 77% coverage)
 4. Upload JaCoCo report as artefact (14-day retention)
 
 **Docker Build & Push Job** (master branch only, after tests pass):
